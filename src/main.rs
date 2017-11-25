@@ -2,31 +2,29 @@ extern crate rand;
 
 use std::cmp::Ordering;
 use std::io;
+use std::process;
 use rand::Rng;
 
-fn game_init() -> u32 {
-    let mut parsed_top_range: u32 = 0;
-    loop {
-        println!("Choose top range");
+fn game_init() -> Result<u32, String> {
 
-        let mut top_range = String::new();
-        io::stdin().read_line(&mut top_range).expect(
-            "Failed to read line",
-        );
+    println!("Choose top range");
 
-        parsed_top_range = match top_range.trim().parse() {
-            Ok(num) => num,
-            Err(_) => continue,
-        };
-        break;
-    }
-    println!("Guess the number from 1 to {}", parsed_top_range);
+    let mut top_range = String::new();
+    io::stdin().read_line(&mut top_range).expect(
+        "Failed to read line",
+    );
 
-    let secret_number = rand::thread_rng().gen_range(1, parsed_top_range);
+    let top_range = top_range.trim().parse::<u32>().map_err(
+        |err| err.to_string(),
+    )?;
+
+    println!("Guess the number from 1 to {}", top_range);
+
+    let secret_number = rand::thread_rng().gen_range(1, top_range);
 
     println!("The secret number is: {}", secret_number);
 
-    return secret_number;
+    return Ok(secret_number);
 }
 
 fn game_loop(secret_number: u32) {
@@ -58,6 +56,10 @@ fn game_loop(secret_number: u32) {
 }
 
 fn main() {
-    let secret_number = game_init();
+    let secret_number = game_init().unwrap_or_else(|err| {
+        println!("Error innitialising the game: {}", err);
+        process::exit(1);
+    });
+
     game_loop(secret_number);
 }
