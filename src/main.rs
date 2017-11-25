@@ -5,29 +5,35 @@ use std::io;
 use std::process;
 use rand::Rng;
 
-fn game_init() -> Result<u32, String> {
-
-    println!("Choose top range");
-
-    let mut top_range = String::new();
-    io::stdin().read_line(&mut top_range).expect(
-        "Failed to read line",
-    );
-
-    let top_range = top_range.trim().parse::<u32>().map_err(
-        |err| err.to_string(),
-    )?;
-
-    println!("Guess the number from 1 to {}", top_range);
-
-    let secret_number = rand::thread_rng().gen_range(1, top_range);
-
-    println!("The secret number is: {}", secret_number);
-
-    return Ok(secret_number);
+struct Config {
+    secret_number: u32,
+    top_range: u32,
 }
 
-fn game_loop(secret_number: u32) {
+impl Config {
+    fn new() -> Result<Config, String> {
+        println!("Choose top range");
+
+        let mut top_range = String::new();
+        io::stdin().read_line(&mut top_range).expect(
+            "Failed to read line",
+        );
+
+        let top_range = top_range.trim().parse::<u32>().map_err(
+            |err| err.to_string(),
+        )?;
+
+        let secret_number = rand::thread_rng().gen_range(1, top_range);
+
+        Ok(Config{secret_number: secret_number, top_range: top_range})
+    }
+}
+
+fn game_loop(game_config: Config) {
+    println!("Guess the number from 1 to {}", game_config.top_range);
+
+    println!("The secret number is: {}", game_config.secret_number);
+
     loop {
         println!("Please input your guess.");
 
@@ -44,7 +50,7 @@ fn game_loop(secret_number: u32) {
 
         println!("You guessed: {}", guess);
 
-        match parsed_guess.cmp(&secret_number) {
+        match parsed_guess.cmp(&game_config.secret_number) {
             Ordering::Less => println!("Too small!"),
             Ordering::Greater => println!("Too big!"),
             Ordering::Equal => {
@@ -56,10 +62,9 @@ fn game_loop(secret_number: u32) {
 }
 
 fn main() {
-    let secret_number = game_init().unwrap_or_else(|err| {
+    let game_config = Config::new().unwrap_or_else(|err| {
         println!("Error innitialising the game: {}", err);
         process::exit(1);
     });
-
-    game_loop(secret_number);
+    game_loop(game_config);
 }
